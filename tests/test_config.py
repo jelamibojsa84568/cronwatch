@@ -15,9 +15,6 @@ from cronwatch.config import (
 
 def test_load_config_returns_defaults_when_no_file(tmp_path):
     """load_config should return defaults when the config file is absent."""
-    non_existent = tmp_path / "missing.yaml"
-    config = load_config(non_existent.parent / "also_missing.yaml") if False else load_config.__wrapped__ if False else None
-    # Use a path that simply doesn't exist (no explicit path → won't raise).
     config = load_config(tmp_path / "no_config.yaml")  # file absent, no raise
     assert config["retention_days"] == DEFAULT_CONFIG["retention_days"]
     assert config["alert_on_failure"] is True
@@ -57,6 +54,13 @@ def test_env_override_log_dir(tmp_path, monkeypatch):
     monkeypatch.setenv("CRONWATCH_LOG_DIR", "/tmp/custom_logs")
     config = load_config(tmp_path / "absent.yaml")
     assert config["log_dir"] == "/tmp/custom_logs"
+
+
+def test_env_override_does_not_leak_between_tests(tmp_path):
+    """Ensure CRONWATCH_LOG_DIR env var does not affect tests that don't set it."""
+    os.environ.pop("CRONWATCH_LOG_DIR", None)
+    config = load_config(tmp_path / "absent.yaml")
+    assert config["log_dir"] == DEFAULT_CONFIG["log_dir"]
 
 
 def test_save_default_config_creates_file(tmp_path):
