@@ -63,7 +63,10 @@ def run_job(
         stderr = proc.stderr
     except subprocess.TimeoutExpired as exc:
         exit_code = -1
-        stdout = exc.stdout or ""
+        # exc.stdout may be bytes when text=True is set but the process is
+        # killed mid-stream; decode defensively to avoid a TypeError.
+        raw_stdout = exc.stdout or b""
+        stdout = raw_stdout.decode(errors="replace") if isinstance(raw_stdout, bytes) else raw_stdout
         stderr = f"Job timed out after {timeout}s"
     except Exception as exc:  # pragma: no cover
         exit_code = -1
