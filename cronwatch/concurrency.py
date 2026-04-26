@@ -96,3 +96,15 @@ def release_slot(policy: ConcurrencyPolicy, job_name: str) -> None:
     pid = os.getpid()
     active = [p for p in active if p != pid]
     _save_active(path, active)
+
+
+def active_instance_count(policy: ConcurrencyPolicy, job_name: str) -> int:
+    """Return the number of currently active instances of *job_name*.
+
+    Stale PIDs (processes that are no longer running) are automatically
+    excluded from the count, consistent with the behaviour of acquire_slot.
+    """
+    if not policy.is_limited():
+        return 0
+    path = _state_path(policy, job_name)
+    return len(_load_active(path))
