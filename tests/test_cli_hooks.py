@@ -70,3 +70,12 @@ def test_cmd_test_hooks_unknown_job_exits_1(runner):
     with patch("cronwatch.cli_hooks.load_config", return_value=_BASE_CONFIG):
         result = runner.invoke(hooks, ["test", "ghost", "--phase", "pre"])
     assert result.exit_code == 1
+
+
+def test_cmd_test_hooks_mixed_results_exits_1(runner):
+    """A mix of passing and failing hooks should still result in exit code 1."""
+    with patch("cronwatch.cli_hooks.load_config", return_value=_BASE_CONFIG), \
+         patch("cronwatch.cli_hooks.run_hooks", return_value=[True, False, True]):
+        result = runner.invoke(hooks, ["test", "backup", "--phase", "pre"])
+    assert result.exit_code == 1
+    assert "FAIL" in result.output
